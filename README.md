@@ -29,7 +29,8 @@ Ziggy uses a very simple configuration file in JSON format. Currently, the follo
  - `routinator-cache` -- path to the Routinator repository cache
  - `routinator-tals` -- path to the Routinator TAL cache
  - `vrp-out-format` -- output format to ask Routinator for
- - `vrp-out-name` -- output filename for VRP data, {} is replace by the date in ISO notation (e.g. 2018-01-01)
+ - `vrp-out-name` -- output filename for VRP data, {} is replaced by the date in ISO notation (e.g. 2018-01-01)
+ - `routinator-log-name` -- filename for the log, {} is replaced by the date in ISO notation
  - `ignore-tals` -- a list of repositories for which Ziggy should not generate a TAL, even if a TA certificate is available
 
 A sample file called `sample-ziggy.conf` is included in the repository.
@@ -44,18 +45,4 @@ $ ./ziggy.py -c <config-file> -d <date-in-ISO>
 
 Where `<date-in-ISO>` is the date for which to extract data in ISO notation (e.g. 2018-01-01 for January 1st, 2018).
 
-Currently, Ziggy outputs the highest observed timestamp in the RIPE `.tgz` archives for that date, you can use this as the data to pass to `faketime`, below is an example of the output:
-
-```
-Highest timestamp found: 2018-01-01 05:30:55
-```
-
-To run Routinator in this example would mean invoking it as follows:
-
-```
-$ faketime '2018-01-01 05:30:55' routinator vrps -n
-```
-
-## TODO
-
- - Actually invoke Routinator
+Ziggy will end by running the Routinator. It shows you the command line it uses to invoke Routinator so you can easily re-run Routinator if you wish to.

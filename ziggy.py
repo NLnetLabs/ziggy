@@ -191,7 +191,22 @@ def process_date(day):
             print('Failed to process {}'.format(tarchive))
             raise e
 
-    print('Highest timestamp found: {}'.format(latest_time))
+    # Step 4: invoke the Routinator
+    print('Ziggy thinks the Routinator should travel back to: {}'.format(latest_time))
+
+    vrp_path = sc.get_path_item('vrp-out-name')
+    log_path = sc.get_path_item('routinator-log-name')
+    vrp_form = sc.get_config_item('vrp-out-format', 'csv')
+
+    routinator_cmd = "faketime '{}' {} -vv --logfile {} vrps -n -o {} -f {}".format(latest_time, sc.get_config_item('routinator','routinator'), log_path.format(day), vrp_path.format(day), vrp_form)
+
+    print('Invoking the Routinator as:')
+    print(routinator_cmd)
+
+    if os.system(routinator_cmd) != 0:
+        print('Routinator exited with an error')
+    else:
+        print('Routinator indicated success!')
 
 def main():
     argparser = argparse.ArgumentParser(description='Make quantum leaps through RPKI history')
