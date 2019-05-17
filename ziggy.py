@@ -124,6 +124,32 @@ def process_date(day):
                     print('Ignoring TAL for {}'.format(basepath))
                     os.unlink('{}/tmp-ta.cer'.format(routinator_cache))
                 else:
+                    # For some older archives, the TA certificate is
+                    # sometimes encoded in PEM format. Convert it to
+                    # DER if necessary
+                    ta_fd = open('{}/tmp-ta.cer'.format(routinator_cache), 'rb')
+                    is_pem = False
+                    pem_header = bytes('-----BEGIN CERTIFICATE-----', 'utf8')
+
+                    for line in ta_fd:
+                        if len(line) >= len(pem_header) and line[:len(pem_header)] == pem_header:
+                            is_pem = True
+                            break
+
+                    ta_fd.close()
+
+                    if is_pem:
+                        print('Found an old TA certificate in PEM format, converting to DER')
+    
+                        osslcmd = 'openssl x509 -inform PEM -in {}/tmp-ta.cer -outform DER -out {}/tmp-ta-der.cer'.format(routinator_cache, routinator_cache)
+    
+                        if os.system(osslcmd) != 0:
+                            raise Exception("Fail to convert TA from PEM to DER")
+    
+                        os.unlink('{}/tmp-ta.cer'.format(routinator_cache))
+                        os.rename('{}/tmp-ta-der.cer'.format(routinator_cache), '{}/tmp-ta.cer'.format(routinator_cache))
+
+                    # Move the TA in place
                     ta_name = 'ta.cer'
                     tal_name = "{}.tal".format(basepath)
 
