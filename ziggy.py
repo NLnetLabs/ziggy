@@ -13,19 +13,47 @@ import tarfile
 import gzip
 import shutil
 import simple_config as sc
+import requests
+
+def download_from_url(url, outfile):
+    try:
+        response = requests.get(url, stream = True)
+
+        if response.status_code != 200:
+            print('No data found at {}'.format(url))
+            return False
+
+        out_fd = open(outfile, 'wb')
+
+        for chunk in response.iter_content(1024*1024):
+            out_fd.write(chunk)
+
+        out_fd.close()
+
+        print('Got {}'.format(url))
+
+        return True
+    except Exception as e:
+        print('Failed to download {}'.format(url))
+        print(e)
+        return False
 
 def process_date(day):
     print('Ziggy is processing data for {}'.format(day))
 
-    # Step 1: find the tar archives for the specified date
-    search_path = sc.get_path_item('repo-archive-dir')
-
+    # Step 1: download tar archives for the specified date
     day_tarfiles = []
+    base_url = "https://ftp.ripe.net/rpki"
+    tals = [ "afrinic.tal", "apnic-afrinic.tal", "apnic-arin.tal", "apnic-iana.tal", "apnic-lacnic.tal", "apnic-ripe.tal", "apnic.tal", "arin.tal", "lacnic.tal", "ripencc.tal" ]
 
-    for name in os.listdir(search_path):
-        if str(day) in name:
-            day_tarfiles.append(name)
-            print('Ziggy found {}'.format(name))
+    tmp_dir = sc.get_path_item('tmp-dir')
+
+    for tal in tals:
+        tal_file = '{}/{}.tar.gz'.format(tmp_dir, tal)
+        tal_url = '{}/{}/{:04d}/{:02d}/{:02d}/repo.tar.gz'.format(base_url, tal, day.year, day.month, day.day)
+
+        if download_from_url(tal_url, tal_file):
+            day_tarfiles.append(tal_file)
 
     # Step 2: clean out the Routinator cache and TAL directory
     routinator_cache = sc.get_path_item('routinator-cache')
@@ -57,7 +85,7 @@ def process_date(day):
         obj_count = 0
 
         try:
-            t = tarfile.open('{}/{}'.format(sc.get_path_item('repo-archive-dir'), tarchive))
+            t = tarfile.open('{}'.format(tarchive))
             basepath = None
             wrote_ta = False
 
@@ -153,13 +181,16 @@ def process_date(day):
                     ta_name = 'ta.cer'
                     tal_name = "{}.tal".format(basepath)
 
+                    # From Oct 2012 - Apr 2018, APNIC had a different repo structure
+                    # that we need to account for when recreating the TALs
                     if 'apnic' in tarchive:
                         fields = tarchive.split('.')
 
                         for field in fields:
-                            if field.startswith('apnic'):
-                                ta_name = 'ta-{}.cer'.format(field)
-                                tal_name = '{}-{}.tal'.format(basepath, field)
+                            if 'apnic' in field:
+                                path_elems = field.split('/')
+                                ta_name = 'ta-{}.cer'.format(path_elems[-1])
+                                tal_name = '{}-{}.tal'.format(basepath, path_elems[-1])
 
                     ta_path = '{}/{}/ta'.format(routinator_cache, basepath)
                     sys.stdout.write('Moving TA to {}/{} ...'.format(ta_path, ta_name))
@@ -207,6 +238,10 @@ def process_date(day):
         print('Routinator exited with an error')
     else:
         print('Routinator indicated success!')
+
+    # Step 5: clean up
+    for tf in day_tarfiles:
+        os.unlink(tf)
 
 def main():
     argparser = argparse.ArgumentParser(description='Make quantum leaps through RPKI history')
