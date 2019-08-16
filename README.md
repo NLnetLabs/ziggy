@@ -4,10 +4,6 @@
 
 All rights reserved. Distributed under a 3-clause BSD-style license. For more information, see LICENSE
 
-## Preamble
-
-The current Ziggy scripts are developed to run against the raw unfiltered data collected by RIPE NCC. Once we turn this into a git repository, we may want to derive a public version of the scripts that works against that.
-
 ## Dependencies
 
 Ziggy requires Python 3 to run, and has been tested with Python 3.6 on Ubuntu 18.04LTS. 
