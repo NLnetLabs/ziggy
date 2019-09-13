@@ -20,9 +20,8 @@ $ apt install python3-dateutil
 
 Ziggy uses a very simple configuration file in JSON format. Currently, the following keys should be defined in the config:
 
- - `repo-archive-dir` -- the directory where the RIPE `.tgz` files are located
  - `routinator` -- the full path to the `routinator` executable to run
- - `routinator-cache` -- path to the Routinator repository cache
+ - `routinator-cache` -- path to the Routinator repository cache (note: for Routinator version older than 0.6 you should change the value in the sample configuration to `~/.rpki-cache/repository`)
  - `routinator-tals` -- path to the Routinator TAL cache
  - `vrp-out-format` -- output format to ask Routinator for
  - `vrp-out-name` -- output filename for VRP data, {} is replaced by the date in ISO notation (e.g. 2018-01-01)
